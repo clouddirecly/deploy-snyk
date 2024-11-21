@@ -1,0 +1,20 @@
+# sensitive
+# Eg: Service Account keyfiles
+*.json
+
+# nodejs
+node_modules/
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# misc
+*~
+.DS_Store
+.vscode/
+
+# artifacts
+dist/
+tsconfig.tsbuildinfo
+
+.idea

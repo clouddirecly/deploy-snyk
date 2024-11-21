@@ -1,0 +1,7 @@
+#!include:.gitignore
+
+# git
+.git/
+
+# GitHub
+.github/
