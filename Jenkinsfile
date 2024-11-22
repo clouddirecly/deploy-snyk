@@ -58,17 +58,50 @@ pipeline{
                         script: "gcloud run services describe ${REPOSITORY}-pr-${env.CHANGE_ID} --region=${REGION} --format='value(status.url)'",
                         returnStdout: true
                     ).trim()
-                    slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
-                    // def response = sh(
-                    //     script: "curl -s -o /dev/null -w '%{http_code}' ${serviceUrl}",
-                    //     returnStdout: true
-                    // ).trim()
 
-                    // if (response != '200') {
-                    //     error "Test failed: Service did not return 200 OK. Response code was ${response}"
-                    // } else {
-                    //     echo "Test passed: Service returned 200 OK"
-                    // }
+                    def jsonPayload = '''
+                       {
+                           "product": "DV",
+                           "reportId": "1357191015",
+                           "profileId": "",
+                           "datasetName": "vulnerabilidades",
+                           "projectId": "gtech-324715",
+                           "single": true,
+                           "ignore": [],
+                           "newest": true,
+                           "replace": false,
+                           "email": "",
+                           "days": 7,
+                           "fileId": [],
+                           "emailAlertError": {
+                               "from": "soporte@direcly.com",
+                               "to": [
+                                   "aar@di.com"
+                               ],
+                               "subject": "United Kingdom CM Function Error"
+                           }
+                       }
+                    '''
+
+                    def responseJson = sh(
+                        script: """
+                            curl -X POST ${serviceUrl} \
+                            -H "Content-Type: application/json" \
+                            -d '${jsonPayload}' \
+                            -s -w '\nHTTP_CODE: %{http_code}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    def responseObject = new groovy.json.JsonSlurper().parseText(responseJson)      
+
+                    if (responseObject.success == false && responseObject.message == "TypeError: response.data.reports is not iterable") {
+                        echo "Test passed: Service returned success"
+                    } else {
+                        error "Test failed: ${responseObject.message}"
+                    }       
+            
+                    slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
 
                      
                 }
