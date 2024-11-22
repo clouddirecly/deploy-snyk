@@ -13,14 +13,9 @@ pipeline{
         stage('Build Docker Image') {
             when { branch 'PR-*' }
             steps {
-                 script {
-                    PR_NUMBER = env.CHANGE_ID
-                    IMG_TAG = "pr-${PR_NUMBER}"
-                    IMAGE_URI = "${IMAGE_NAME}:${IMG_TAG}"
-                    SERVICE_NAME = "${REPOSITORY}-${IMG_TAG}"
-
+                 script {         
                     slackSend color:'good', message: "🚀 Deployment started for PR #${env.CHANGE_ID}. Repository: ${REPOSITORY}, Branch: ${env.BRANCH_NAME}."
-                    sh "docker build -t ${IMAGE_URI} ."
+                    sh "docker build -t ${IMAGE_NAME}:pr-${env.CHANGE_ID} ."
                 }
             }
         }
@@ -33,7 +28,7 @@ pipeline{
                         sh "gcloud config set project ${PROJECT_ID}"
                         sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev"
 
-                        sh "docker push ${IMAGE_URI}"
+                        sh "docker push ${IMAGE_NAME}:pr-${env.CHANGE_ID}"
                         slackSend color: 'good', message: "✅ Deployment successful! The Docker image from Artifact Registry has been deployed. Image : ${IMAGE_NAME}:pr-${env.CHANGE_ID}"
                     }
                 }
@@ -45,15 +40,15 @@ pipeline{
                 withCredentials([string(credentialsId: 'service-account-name', variable: 'SERVICE_ACCOUNT_NAME')]) {
                     script {  
                         sh '''
-                        gcloud run deploy ${SERVICE_NAME} \
-                        --image=${IMAGE_URI} \
+                        gcloud run deploy ${REPOSITORY}-pr-${env.CHANGE_ID} \
+                        --image=${IMAGE_NAME}:pr-${env.CHANGE_ID} \
                         --region=${REGION} \
                         --platform=managed \
                         --allow-unauthenticated\
                         --service-account $SERVICE_ACCOUNT_NAME
                         '''
 
-                        slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${SERVICE_NAME}"
+                        slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${REPOSITORY}-pr-${env.CHANGE_ID}"
                     }
                 }
             }
@@ -63,7 +58,7 @@ pipeline{
             steps {
                 script {
                     def serviceUrl = sh(
-                        script: "gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format='value(status.url)'",
+                        script: "gcloud run services describe ${REPOSITORY}-pr-${env.CHANGE_ID} --region=${REGION} --format='value(status.url)'",
                         returnStdout: true
                     ).trim()
 
@@ -78,7 +73,7 @@ pipeline{
                     //     echo "Test passed: Service returned 200 OK"
                     // }
 
-                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed: ${SERVICE_NAME}"
+                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed: ${REPOSITORY}-pr-${env.CHANGE_ID}"
                 }
             }
         }
@@ -92,7 +87,7 @@ pipeline{
                         gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY}
                         """
                     }
-                    slackSend color: 'good', message: "✅ Pull Request #${PR_NUMBER} successfully merged! 🚀 "
+                    slackSend color: 'good', message: "✅ Pull Request #${env.CHANGE_ID} successfully merged! 🚀 "
                 }
             }
         }
