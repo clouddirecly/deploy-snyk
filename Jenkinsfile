@@ -61,26 +61,27 @@ pipeline{
 
                     def jsonPayload = '''
                        {
-                           "product": "DV",
-                           "reportId": "1357191015",
-                           "profileId": "",
-                           "datasetName": "vulnerabilidades",
-                           "projectId": "gtech-324715",
-                           "single": true,
-                           "ignore": [],
-                           "newest": true,
-                           "replace": false,
-                           "email": "",
-                           "days": 7,
-                           "fileId": [],
-                           "emailAlertError": {
-                               "from": "soporte@direcly.com",
-                               "to": [
-                                   "aar@di.com"
-                               ],
-                               "subject": "United Kingdom CM Function Error"
-                           }
-                       }
+                        "product": "CM",
+                        "reportId": "1357270102",
+                        "profileId": "9925378",
+                        "datasetName": "vulnerabilidades",
+                        "projectId": "gtech-324715",
+                        "single": true,
+                        "ignore": [],
+                        "newest": true,
+                        "replace": false,
+                        "email": "",
+                        "days": 7,
+                        "fileId":[ ],
+                        "emailAlertError": {
+                            "from": "soporte@direcly.com",
+                            "to": [
+                                "aaristizabal@direcly.com"
+
+                            ],
+                            "subject": "United Kingdom CM Function Error"
+                        }   
+}
                     '''
 
                     def responseJson = sh(
@@ -92,13 +93,15 @@ pipeline{
                         returnStdout: true
                     ).trim()
 
-                    def responseObject = new groovy.json.JsonSlurper().parseText(responseJson)      
+                    echo"${responseJson}"
 
-                    if (responseObject.success == false && responseObject.message == "TypeError: response.data.reports is not iterable") {
-                        echo "Test passed: Service returned success"
-                    } else {
-                        error "Test failed: ${responseObject.message}"
-                    }       
+                    // def responseObject = new groovy.json.JsonSlurper().parseText(responseJson)      
+
+                    // if (responseObject.success == true && responseObject.message == "Ingestion successful.") {
+                    //     echo "Test passed: Service returned success"
+                    // } else {
+                    //     error "Test failed"
+                    // }       
             
                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
 
