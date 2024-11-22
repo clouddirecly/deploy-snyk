@@ -7,18 +7,18 @@ pipeline{
         OWNER = "clouddirecly"
         REPOSITORY = "deploy-snyk" 
         IMAGE_NAME = "${REGION}-docker.pkg.dev/${PROJECT_ID}/jenkins-repo/${REPOSITORY}"
-        SA_NAME = 'service-account-name'
-
-        PR_NUMBER = env.CHANGE_ID
-        IMG_TAG = "pr-${PR_NUMBER}"
-        IMAGE_URI = "${IMAGE_NAME}:${IMG_TAG}"
-        SERVICE_NAME = "${REPOSITORY}-${IMG_TAG}" 
+        SA_NAME = 'service-account-name' 
     }
     stages {
         stage('Build Docker Image') {
             when { branch 'PR-*' }
             steps {
                  script {
+                    PR_NUMBER = env.CHANGE_ID
+                    IMG_TAG = "pr-${PR_NUMBER}"
+                    IMAGE_URI = "${IMAGE_NAME}:${IMG_TAG}"
+                    SERVICE_NAME = "${REPOSITORY}-${IMG_TAG}"
+
                     slackSend color:'good', message: "🚀 Deployment started for PR #${env.CHANGE_ID}. Repository: ${REPOSITORY}, Branch: ${env.BRANCH_NAME}."
                     sh "docker build -t ${IMAGE_URI} ."
                 }
