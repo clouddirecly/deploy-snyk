@@ -82,7 +82,7 @@ pipeline{
                     withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
         
                         sh """
-                        gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY} --auth-token=${GH_TOKEN}
+                        gh pr merge ${env.CHANGE_ID} --merge --repo ${OWNER}/${REPOSITORY} 
                         """
                     }
                     slackSend color: 'good', message: "✅ Pull Request #${env.CHANGE_ID} successfully merged! 🚀 "
