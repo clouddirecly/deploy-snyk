@@ -7,7 +7,7 @@ pipeline{
         OWNER = "clouddirecly"
         REPOSITORY = "deploy-snyk" 
         IMAGE_NAME = "${REGION}-docker.pkg.dev/${PROJECT_ID}/jenkins-repo/${REPOSITORY}"
-        SA_NAME = "service-account-name"  
+        SA_NAME = credentials('service-account-name')  
     }
     stages {
         stage('Build Docker Image') {
@@ -55,7 +55,7 @@ pipeline{
                         --region=${REGION} \
                         --platform=managed \
                         --allow-unauthenticated\
-                        --service-account ${sa_name}
+                        --service-account ${SA_NAME}
                         """
 
                         slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${SERVICE_NAME}"
