@@ -58,7 +58,7 @@ pipeline{
                         script: "gcloud run services describe ${REPOSITORY}-pr-${env.CHANGE_ID} --region=${REGION} --format='value(status.url)'",
                         returnStdout: true
                     ).trim()
-
+                    slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
                     // def response = sh(
                     //     script: "curl -s -o /dev/null -w '%{http_code}' ${serviceUrl}",
                     //     returnStdout: true
@@ -70,7 +70,7 @@ pipeline{
                     //     echo "Test passed: Service returned 200 OK"
                     // }
 
-                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
+                     
                 }
             }
         }
@@ -80,8 +80,9 @@ pipeline{
             steps {
                 script {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
+                        def ghToken = env.GH_TOKEN
                         sh """
-                        gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY}
+                        gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY} --auth-token ${ghToken}
                         """
                     }
                     slackSend color: 'good', message: "✅ Pull Request #${env.CHANGE_ID} successfully merged! 🚀 "
