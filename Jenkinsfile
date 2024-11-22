@@ -42,7 +42,7 @@ pipeline{
         stage('Deploy to Cloud Run') {
             when { branch 'PR-*' }
             steps {
-                withCredentials([string(credentialsId: "${SA-NAME}", variable: 'SERVICE_ACCOUNT_NAME')]) {
+                withCredentials([string(credentialsId: 'service-account-name', variable: 'SERVICE_ACCOUNT_NAME')]) {
                     script {  
                         sh '''
                         gcloud run deploy ${SERVICE_NAME} \
