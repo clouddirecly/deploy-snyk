@@ -7,7 +7,7 @@ pipeline{
         OWNER = "clouddirecly"
         REPOSITORY = "deploy-snyk" 
         IMAGE_NAME = "${REGION}-docker.pkg.dev/${PROJECT_ID}/jenkins-repo/${REPOSITORY}"
-        SA_NAME = 'service-account-name' 
+        SERVICE_ACCOUNT_NAME = "sa-jenkins-pipeline@gtech-324715.iam.gserviceaccount.com" 
     }
     stages {
         stage('Build Docker Image') {
@@ -37,20 +37,17 @@ pipeline{
         stage('Deploy to Cloud Run') {
             when { branch 'PR-*' }
             steps {
-                withCredentials([string(credentialsId: 'service-account-name', variable: 'SERVICE_ACCOUNT_NAME')]) {
-                    script {  
-                        sh '''
-                        gcloud run deploy ${REPOSITORY}-pr-${env.CHANGE_ID} \
-                        --image=${IMAGE_NAME}:pr-${env.CHANGE_ID} \
-                        --region=${REGION} \
-                        --platform=managed \
-                        --allow-unauthenticated\
-                        --service-account $SERVICE_ACCOUNT_NAME
-                        '''
-
-                        slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${REPOSITORY}-pr-${env.CHANGE_ID}"
-                    }
-                }
+                script {  
+                    sh """
+                    gcloud run deploy ${REPOSITORY}-pr-${env.CHANGE_ID} \
+                    --image=${IMAGE_NAME}:pr-${env.CHANGE_ID} \
+                    --region=${REGION} \
+                    --platform=managed \
+                    --allow-unauthenticated\
+                    --service-account ${SERVICE_ACCOUNT_NAME}
+                    """
+                    slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${REPOSITORY}-pr-${env.CHANGE_ID}"
+                }    
             }
         }
         stage('Test Cloud Run Deployment') {
@@ -94,12 +91,12 @@ pipeline{
     }
     post {
         failure {
-            slackSend color:'danger', message: "Build PR-${PR_NUMBER} failed in stage ${env.STAGE_NAME}"
+            slackSend color:'danger', message: "Build PR-${env.CHANGE_ID} failed in stage ${env.STAGE_NAME}"
         }
         success {
             script {
                 if(env.BRANCH_NAME != 'main') {
-                    slackSend color:'good', message: "✅ Build for PR-${PR_NUMBER} succeeded "
+                    slackSend color:'good', message: "✅ Build for PR-${env.CHANGE_ID} succeeded "
                 }
             }
         }
