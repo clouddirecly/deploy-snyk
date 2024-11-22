@@ -7,17 +7,20 @@ pipeline{
         OWNER = "clouddirecly"
         REPOSITORY = "deploy-snyk" 
         IMAGE_NAME = "${REGION}-docker.pkg.dev/${PROJECT_ID}/jenkins-repo/${REPOSITORY}"
-        SA_NAME = credentials('service-account-name')  
+        SA_NAME = 'service-account-name'
+
+        PR_NUMBER = env.CHANGE_ID
+        IMG_TAG = "pr-${PR_NUMBER}"
+        IMAGE_URI = "${IMAGE_NAME}:${IMG_TAG}"
+        SERVICE_NAME = "${REPOSITORY}-${IMG_TAG}" 
     }
     stages {
         stage('Build Docker Image') {
             when { branch 'PR-*' }
             steps {
                  script {
-                    def prNumber = env.CHANGE_ID
-                    def imageTag = "pr-${prNumber}"
                     slackSend color:'good', message: "🚀 Deployment started for PR #${env.CHANGE_ID}. Repository: ${REPOSITORY}, Branch: ${env.BRANCH_NAME}."
-                    sh "docker build -t ${IMAGE_NAME}:${imageTag} ."
+                    sh "docker build -t ${IMAGE_URI} ."
                 }
             }
         }
@@ -30,10 +33,7 @@ pipeline{
                         sh "gcloud config set project ${PROJECT_ID}"
                         sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev"
 
-                        def prNumber = env.CHANGE_ID
-                        def imageTag = "pr-${prNumber}"
-                        sh "docker push ${IMAGE_NAME}:${imageTag}"
-
+                        sh "docker push ${IMAGE_URI}"
                         slackSend color: 'good', message: "✅ Deployment successful! The Docker image from Artifact Registry has been deployed. Image : ${IMAGE_NAME}:pr-${env.CHANGE_ID}"
                     }
                 }
@@ -42,21 +42,16 @@ pipeline{
         stage('Deploy to Cloud Run') {
             when { branch 'PR-*' }
             steps {
-                withCredentials([file(credentialsId: "${SA-NAME}", variable: 'sa_name')]) {
-                    script {
-                        def prNumber = env.CHANGE_ID
-                        def imageTag = "pr-${prNumber}"
-                        def imageUri = "${IMAGE_NAME}:${imageTag}"
-                        def SERVICE_NAME = "${REPOSITORY}-pr-${prNumber}"
-
-                        sh """
+                withCredentials([string(credentialsId: 'service-account-name', variable: 'SERVICE_ACCOUNT_NAME')]) {
+                    script {  
+                        sh '''
                         gcloud run deploy ${SERVICE_NAME} \
-                        --image=${imageUri} \
+                        --image=${IMAGE_URI} \
                         --region=${REGION} \
                         --platform=managed \
                         --allow-unauthenticated\
-                        --service-account ${SA_NAME}
-                        """
+                        --service-account $SERVICE_ACCOUNT_NAME
+                        '''
 
                         slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Cloud run name: ${SERVICE_NAME}"
                     }
@@ -67,10 +62,6 @@ pipeline{
             when { branch 'PR-*' }
             steps {
                 script {
-                    def prNumber = env.CHANGE_ID
-                    def imageTag = "pr-${prNumber}"
-                    def SERVICE_NAME = "${REPOSITORY}-${imageTag}"
-
                     def serviceUrl = sh(
                         script: "gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format='value(status.url)'",
                         returnStdout: true
@@ -101,19 +92,19 @@ pipeline{
                         gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY}
                         """
                     }
-                    slackSend color: 'good', message: "✅ Pull Request #${prNumber} successfully merged! 🚀 "
+                    slackSend color: 'good', message: "✅ Pull Request #${PR_NUMBER} successfully merged! 🚀 "
                 }
             }
         }
     }
     post {
         failure {
-            slackSend color:'danger', message: "Build PR-${env.CHANGE_ID} failed in stage ${env.STAGE_NAME}"
+            slackSend color:'danger', message: "Build PR-${PR_NUMBER} failed in stage ${env.STAGE_NAME}"
         }
         success {
             script {
                 if(env.BRANCH_NAME != 'main') {
-                    slackSend color:'good', message: "✅ Build for PR-${env.CHANGE_ID} succeeded "
+                    slackSend color:'good', message: "✅ Build for PR-${PR_NUMBER} succeeded "
                 }
             }
         }
