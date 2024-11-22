@@ -88,7 +88,6 @@ pipeline{
                             curl -X POST ${serviceUrl} \
                             -H "Content-Type: application/json" \
                             -d '${jsonPayload}' \
-                            -s -w '\nHTTP_CODE: %{http_code}'
                         """,
                         returnStdout: true
                     ).trim()
