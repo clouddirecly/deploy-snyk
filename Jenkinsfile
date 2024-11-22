@@ -80,9 +80,9 @@ pipeline{
             steps {
                 script {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
-                        def ghToken = env.GH_TOKEN
+        
                         sh """
-                        gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY} --auth-token ${ghToken}
+                        gh pr merge ${env.CHANGE_ID} --merge --repo ${owner}/${REPOSITORY} --auth-token 
                         """
                     }
                     slackSend color: 'good', message: "✅ Pull Request #${env.CHANGE_ID} successfully merged! 🚀 "
