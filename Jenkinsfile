@@ -40,8 +40,8 @@ pipeline{
                 withCredentials([string(credentialsId: 'service-account-name', variable: 'SERVICE_ACCOUNT_NAME')]) {
                     script {  
                         sh '''
-                        gcloud run deploy ${REPOSITORY}-pr-${env.CHANGE_ID} \
-                        --image=${IMAGE_NAME}:pr-${env.CHANGE_ID} \
+                        gcloud run deploy "${REPOSITORY}-pr-${env.CHANGE_ID}" \
+                        --image="${IMAGE_NAME}:pr-${env.CHANGE_ID}" \
                         --region=${REGION} \
                         --platform=managed \
                         --allow-unauthenticated\
@@ -94,12 +94,12 @@ pipeline{
     }
     post {
         failure {
-            slackSend color:'danger', message: "Build PR-${PR_NUMBER} failed in stage ${env.STAGE_NAME}"
+            slackSend color:'danger', message: "Build PR-${env.CHANGE_ID} failed in stage ${env.STAGE_NAME}"
         }
         success {
             script {
                 if(env.BRANCH_NAME != 'main') {
-                    slackSend color:'good', message: "✅ Build for PR-${PR_NUMBER} succeeded "
+                    slackSend color:'good', message: "✅ Build for PR-${env.CHANGE_ID} succeeded "
                 }
             }
         }
