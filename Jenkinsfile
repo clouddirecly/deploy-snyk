@@ -70,7 +70,7 @@ pipeline{
                     //     echo "Test passed: Service returned 200 OK"
                     // }
 
-                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed: ${REPOSITORY}-pr-${env.CHANGE_ID}"
+                     slackSend color: 'good', message: "✅ Test Cloud Run Deployment Successful! Service deployed"
                 }
             }
         }
