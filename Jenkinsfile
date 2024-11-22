@@ -15,7 +15,7 @@ pipeline{
                  script {
                     def prNumber = env.CHANGE_ID
                     def imageTag = "pr-${prNumber}"
-                    slackSend color:'good', message: "🚀 Deployment started for PR #${env.CHANGE_ID}. Repository: ${env.GIT_REPO}, Branch: ${env.BRANCH_NAME}."
+                    slackSend color:'good', message: "🚀 Deployment started for PR #${env.CHANGE_ID}. Repository: ${REPOSITORY}, Branch: ${env.BRANCH_NAME}."
                     sh "docker build -t ${IMAGE_NAME}:${imageTag} ."
                 }
             }
@@ -32,30 +32,34 @@ pipeline{
                         def prNumber = env.CHANGE_ID
                         def imageTag = "pr-${prNumber}"
                         sh "docker push ${IMAGE_NAME}:${imageTag}"
+
+                        slackSend color: 'good', message: "✅ Deployment successful! The Docker image from Artifact Registry has been deployed to Cloud Run. Image : ${IMAGE_NAME}:pr:${env.CHANGE_ID}"
                     }
                 }
             }
         }
-        // stage('Deploy to Cloud Run') {
-        //     // when { branch 'PR-*' }
-        //     // steps {
-        //     //     script {
-        //     //         def prNumber = env.CHANGE_ID
-        //     //         def imageTag = "pr-${prNumber}"
-        //     //         def imageUri = "${IMAGE_NAME}:${imageTag}"
-        //     //         def SERVICE_NAME = "jenkins-pr-${prNumber}"
+        stage('Deploy to Cloud Run') {
+            when { branch 'PR-*' }
+            steps {
+                script {
+                    def prNumber = env.CHANGE_ID
+                    def imageTag = "pr-${prNumber}"
+                    def imageUri = "${IMAGE_NAME}:${imageTag}"
+                    def SERVICE_NAME = "${REPOSITORY}-pr-${prNumber}"
 
-        //     //         sh """
-        //     //         gcloud run deploy ${SERVICE_NAME} \
-        //     //         --image=${imageUri} \
-        //     //         --region=${REGION} \
-        //     //         --platform=managed \
-        //     //         --allow-unauthenticated\
-        //     //         --set-env-vars API_VERSION=1.0.0,APP_NAME=deploy-github
-        //     //         """
-        //     //     }
-        //     // }
-        // }
+                    sh """
+                    gcloud run deploy ${SERVICE_NAME} \
+                    --image=${imageUri} \
+                    --region=${REGION} \
+                    --platform=managed \
+                    --allow-unauthenticated\
+                    --set-env-vars API_VERSION=1.0.0,APP_NAME=deploy-github
+                    """
+
+                    slackSend color: 'good', message: "✅ Cloud Run Deployment Successful! Service deployed: ${SERVICE_NAME}"
+                }
+            }
+        }
         // stage('Test Cloud Run Deployment') {
         //     // when { branch 'PR-*' }
         //     // steps {
