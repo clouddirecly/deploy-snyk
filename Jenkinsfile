@@ -95,8 +95,9 @@ pipeline{
 
                     echo"${responseJson}"
 
-                    def responseObject = new groovy.json.JsonSlurper().parseText(responseJson)     
-                    if (responseObject.success == true && responseObject.message == "Ingestion successful.") {
+                    def responseObject = new groovy.json.JsonSlurper().parseText(responseJson) 
+                    def serializableMap = new HashMap(responseObject)    
+                    if (serializableMap.success == true && serializableMap.message == "Ingestion successful.") {
                         echo "Test passed: Service returned success"
                     } else {
                         error "Test failed"
