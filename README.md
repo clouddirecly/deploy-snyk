@@ -17,9 +17,9 @@ POST calls with configured JSON, which allows for use with tools like
 [Cloud Scheduler](https://cloud.google.com/scheduler/). Argon always checks schemas,
 uploads all values as string type, and appends a File ID column to track ingestions.
 
-## Setup
+## Setup.
 
-### Google Cloud Project
+### Google Cloud Project.
 
 - Use a [Google Cloud project](https://console.cloud.google.com), where you are the Owner.
 
