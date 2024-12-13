@@ -24,7 +24,7 @@
     "test": "echo 'Error: No tests defined' && exit 1"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^6.0.3",
+    "@google-cloud/bigquery": "^6.2.1",
     "@google-cloud/functions-framework": "^3.1.2",
     "axios": "^1.7.4",
     "google-auth-library": "^8.6.0",
